@@ -1,0 +1,15 @@
+#Slider Values
+#Mon Feb 10 23:23:07 EST 2025
+Damping=0.8
+Gravity\ X=0.0
+Gravity\ Y=2.2
+Minimum\ Surface\ Tension\ Force\ Magnitude=4.1E-6
+Mouse\ Power=10.0
+Mouse\ Radius=100.0
+Pressure\ Factor=1200.0
+Simulation\ Speed=42.0
+Smoothing\ Width=15.0
+Sub\ Steps=34.0
+Surface\ Tension\ Factor=0.1
+Time\ Step=0.05
+Viscosity\ Factor=41.0
