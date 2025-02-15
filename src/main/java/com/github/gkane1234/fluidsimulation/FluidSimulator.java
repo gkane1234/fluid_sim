@@ -11,9 +11,9 @@ import java.awt.Point;
 // create a kernel object
 // create a force object
 public class FluidSimulator {
-    private static final double VISCOSITY_FACTOR_MULTIPLIER = 1000;
-    private static final double PRESSURE_FACTOR_MULTIPLIER = 1000;
-    private static final double SURFACE_TENSION_FACTOR_MULTIPLIER = 100000;
+    private static final double VISCOSITY_FACTOR_MULTIPLIER = 1;//1000;
+    private static final double PRESSURE_FACTOR_MULTIPLIER = 1;//1000;
+    private static final double SURFACE_TENSION_FACTOR_MULTIPLIER = 1;//100000;
     private int width;
     private int height;
     private int numParticles;
@@ -45,24 +45,26 @@ public class FluidSimulator {
     private int threadingChunkSize;
 
     private List<Attractor> attractors;
+
+    private long lastTime;
     public FluidSimulator() {
-        this.PRESSURE_FACTOR = 1200;
-        this.VISCOSITY_FACTOR = 41; //460
+        this.PRESSURE_FACTOR = 200;
+        this.VISCOSITY_FACTOR = 10; //460
         this.SURFACE_TENSION_FACTOR = 10; //4.4e-3
         this.MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = 4.1e-6; //3.2e-6
 
-        this.width = 1200;
-        this.height = 1200;
+        this.width = 500;
+        this.height = 500;
         this.timeStep = 0.05;
         this.simulationSpeed = 1; //51
         this.gravity = new Vector2D(0, 2.2); //2
 
-        this.numParticles = 2000;
+        this.numParticles = 10000;
 
         this.damping = 0.8; //0.95
-        this.gridSize = 120; // number of grids per axis
+        this.gridSize = width/4; // number of grids per axis
         this.numThreads = 500;
-        this.smoothingWidth = 10;
+        this.smoothingWidth = 2;
         this.subSteps = 1; //44
         this.mouseRadius = 100;
         this.mousePower = 10;
@@ -88,6 +90,7 @@ public class FluidSimulator {
         this.dropDowns.add(new DropDown("Pressure", kernelNames, "Pressure"));
         this.dropDowns.add(new DropDown("Viscosity", kernelNames, "Viscosity"));
         this.dropDowns.add(new DropDown("Surface Tension", kernelNames, "Surface Tension"));
+
         this.grid = new ArrayList[gridSize][gridSize];
         for (int i = 0; i < gridSize; i++) {
             for (int j = 0; j < gridSize; j++) {
@@ -219,7 +222,7 @@ public class FluidSimulator {
         endTime = System.nanoTime();
         timeTaken[2] += endTime - startTime;
         // Move particles and apply boundary conditions
-       // latch = new CountDownLatch(gridSize * gridSize);
+        //latch = new CountDownLatch(gridSize * gridSize);
         startTime = System.nanoTime();
         executeParallelTask(p -> {
             p.applyBoundaryConditions(width, height, damping);
@@ -230,7 +233,7 @@ public class FluidSimulator {
     }
 
     private void executeParallelTask(ParticleTask task, ExecutorService executor) {
-        // Use a larger chunk size to reduce overhead
+         //Use a larger chunk size to reduce overhead
         int numChunks = (int) Math.ceil((double) particles.size() / threadingChunkSize);
         final CountDownLatch latch = new CountDownLatch(numChunks);
 
@@ -255,6 +258,7 @@ public class FluidSimulator {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
     }
 
     @FunctionalInterface
@@ -437,6 +441,7 @@ public class FluidSimulator {
 
     public double Kernel(double distance, int forceIndex) {
         if (distance < smoothingWidth) {
+            //return Gaussian_Kernel(distance);
             if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
                 return Gaussian_Kernel(distance);
             }
@@ -459,6 +464,7 @@ public class FluidSimulator {
 
     public double Kernel_Derivative(double distance, int forceIndex) {
         if (distance < smoothingWidth) {
+            //return Gaussian_Kernel_Derivative(distance);
             if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
                 return Gaussian_Kernel_Derivative(distance);
             }
@@ -480,6 +486,7 @@ public class FluidSimulator {
 
     public double Kernel_Second_Derivative(double distance, int forceIndex) {
         if (distance < smoothingWidth) {
+            //return Gaussian_Kernel_Second_Derivative(distance);
             if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
                 return Gaussian_Kernel_Second_Derivative(distance);
             }
