@@ -6,6 +6,7 @@ import org.lwjgl.system.*;
 
 import java.nio.*;
 import java.awt.Color;
+import java.awt.Point;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -19,6 +20,8 @@ public class FluidGPU {
     private int height;
     private static final int PARTICLE_SIZE = 5;
     private static final int ATTRACTOR_SIZE = 10;
+    private boolean mousePressed = false;
+    private double mouseX, mouseY;
     
     public FluidGPU(FluidSimulator simulator) {
         this.simulator = simulator;
@@ -29,22 +32,16 @@ public class FluidGPU {
     }
     
     private void initWindow() {
-
-
         // Initialize GLFW with error checking
         GLFWErrorCallback.createPrint(System.err).set();
         if (!glfwInit()) {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
 
-
-
         // Set window hints
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-        //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         
         // Create window
         window = glfwCreateWindow(width, height, "Fluid Simulation", NULL, NULL);
@@ -52,13 +49,37 @@ public class FluidGPU {
             glfwTerminate();
             throw new RuntimeException("Failed to create window");
         }
-        //glfwPostEmptyEvent();
-        //glfwWaitEvents();
 
-        // Set up escape key callback
+        // Set up keyboard callbacks
         glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
             if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                 glfwSetWindowShouldClose(window, true);
+            }
+            if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+                simulator.addAttractor(new Attractor(new Point((int)mouseX, (int)mouseY), simulator.getMousePower(), simulator.getMouseRadius()));
+            }
+        });
+
+        // Set up mouse callbacks
+        glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                if (action == GLFW_PRESS) {
+                    mousePressed = !mousePressed;
+                    System.out.println("Mouse pressed: " + mousePressed);
+                }
+            }
+        });
+
+        glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {
+            mouseX = xpos;
+            mouseY = ypos;
+
+            if (mousePressed) {
+                System.out.println("Mouse position: " + xpos + ", " + ypos);
+                simulator.setMousePosition(new Point((int)xpos, (int)ypos));
+            }
+            else {
+                simulator.setMousePosition(null);
             }
         });
 
@@ -95,15 +116,9 @@ public class FluidGPU {
         glOrtho(0, width, height, 0, -1, 1);
         glMatrixMode(GL_MODELVIEW);
         glPointSize(PARTICLE_SIZE);
-        
-        // Enable blending for particles
-        //glEnable(GL_BLEND);
-        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     public void render() {
-        // Process events before rendering
-
         // Clear and render
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -118,12 +133,14 @@ public class FluidGPU {
         glEnd();
         
         // Draw attractors
+        glPointSize(ATTRACTOR_SIZE);
         glColor3f(1.0f, 0.0f, 0.0f);
         glBegin(GL_POINTS);
         for (Attractor a : simulator.getAttractors()) {
             glVertex2f(a.getPosition().x, a.getPosition().y);
         }
         glEnd();
+        glPointSize(PARTICLE_SIZE);
 
         // Swap buffers
         glfwSwapBuffers(window);

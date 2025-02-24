@@ -1,17 +1,15 @@
 package com.github.gkane1234.fluidsimulation;
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
 
 public class Particle {
     private Vector2D position;
     private Vector2D velocity;
-    private Vector2D force;
     private double mass;
-    private double density;
-    private double pressure;
+    private Map<String, Double> measurements;
+
     private Color color;
     private int[] gridPosition;
     
@@ -29,8 +27,7 @@ public class Particle {
         this.velocity = velocity;
         this.mass = mass;
         this.color = new Color(0, 0, 0);
-        this.density = 0;
-        this.pressure = 0;
+        this.measurements = new HashMap<>();
     }
 
     public double getX() {
@@ -49,20 +46,20 @@ public class Particle {
         return velocity;
     }
 
-    public double getDensity() {
-        return density;
+    public double getMeasurement(String measurement) {
+        return measurements.get(measurement);
     }
 
-    public void setDensity(double density) {
-        this.density = density;
+    public void setMeasurement(String measurement, double value) {
+        measurements.put(measurement, value);
     }
 
-    public double getPressure() {
-        return pressure;
+    public boolean hasMeasurement(String measurement) {
+        return measurements.containsKey(measurement);
     }
 
-    public void setPressure(double pressure) {
-        this.pressure = pressure;
+    public void clearMeasurements() {
+        measurements.clear();
     }
 
     public double getMass() {
