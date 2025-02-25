@@ -2,13 +2,15 @@ package com.github.gkane1234.fluidsimulation;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Consumer;
 
 public class DropDown {
     private JComboBox<String> comboBox;
     private JLabel label;
     private String currentSelection;
+    private Consumer<String> updateFunction;
     
-    public DropDown(String forceName, String[] kernelNames, String initialKernel) {
+    public DropDown(String forceName, String[] kernelNames, String initialKernel, Consumer<String> updateFunction) {
         this.currentSelection = initialKernel;
         this.comboBox = new JComboBox<>(kernelNames);
         this.comboBox.setSelectedItem(initialKernel);
@@ -16,6 +18,7 @@ public class DropDown {
         
         comboBox.addActionListener(e -> {
             currentSelection = (String) comboBox.getSelectedItem();
+            updateFunction.accept(currentSelection);
         });
     }
     

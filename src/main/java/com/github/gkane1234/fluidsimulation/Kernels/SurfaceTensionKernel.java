@@ -12,15 +12,15 @@ public class SurfaceTensionKernel extends KernelObject {
         gaussianKernel = new GaussianKernel();
     }
 
-    public double kernel(double distance, double smoothingWidth) {
-        return gaussianKernel.kernel(distance, smoothingWidth);
+    public double kernelInside(double distance, double smoothingWidth) {
+        return gaussianKernel.kernelInside(distance, smoothingWidth);
     }
 
-    public double kernelDerivative(double distance, double smoothingWidth) {
-        return gaussianKernel.kernelDerivative(distance, smoothingWidth);
+    public double kernelDerivativeInside(double distance, double smoothingWidth) {
+        return gaussianKernel.kernelDerivativeInside(distance, smoothingWidth);
     }
 
-    public double kernelSecondDerivative(double distance, double smoothingWidth) {
-        return gaussianKernel.kernelSecondDerivative(distance, smoothingWidth);
+    public double kernelSecondDerivativeInside(double distance, double smoothingWidth) {
+        return gaussianKernel.kernelSecondDerivativeInside(distance, smoothingWidth);
     }
 }

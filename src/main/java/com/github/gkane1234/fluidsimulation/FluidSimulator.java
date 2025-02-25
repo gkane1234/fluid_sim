@@ -35,7 +35,6 @@ public class FluidSimulator {
     private double smoothingWidth;
     private List<VariableSlider> variableSliders;
     private List<DropDown> dropDowns;
-    private String[] kernelNames;
     private Point mousePosition;
     private double mouseRadius;
     private double mousePower;
@@ -60,33 +59,49 @@ public class FluidSimulator {
     public FluidSimulator() {
         setConstants();
         addAllKernels();
-        addAllForces();
+
+        PressureForce pressureForce = new PressureForce(kernels.get(2), PRESSURE_FACTOR);
+        ViscosityForce viscosityForce = new ViscosityForce(kernels.get(3), VISCOSITY_FACTOR);
+        SurfaceTensionForce surfaceTensionForce = new SurfaceTensionForce(kernels.get(4), SURFACE_TENSION_FACTOR);
+        GravityForce gravityForce = new GravityForce(gravity);
+        this.forces = new ArrayList<>();
+        this.forces.add(pressureForce);
+        this.forces.add(viscosityForce);
+        this.forces.add(surfaceTensionForce);
+        this.forces.add(gravityForce);
+        
 
         measurementObjects = new ArrayList<>();
         addAllMeasurements();
 
 
-        this.kernelNames = new String[]{"Gaussian", "Poly6", "Pressure", "Viscosity", "Surface Tension"};
+        //this.kernelNames = new String[]{"Gaussian", "Poly6", "Pressure", "Viscosity", "Surface Tension"};
         this.variableSliders = new ArrayList<VariableSlider>();
         this.variableSliders.add(new VariableSlider("Simulation Speed", 0, 100, simulationSpeed, value -> this.simulationSpeed = value));
         this.variableSliders.add(new VariableSlider("Time Step", 0, 1000, timeStep*1000, value -> this.timeStep = value/1000));
         this.variableSliders.add(new VariableSlider("Sub Steps", 1, 100, subSteps, value -> this.subSteps = (int)Math.round(value)));
         this.variableSliders.add(new VariableSlider("Damping", 0.0, 1.0, damping, value -> this.damping = value));
-        this.variableSliders.add(new VariableSlider("Gravity X", -1.0, 1.0, gravity.getX(), value -> this.gravity = new Vector2D(value, this.gravity.getY())));
-        this.variableSliders.add(new VariableSlider("Gravity Y", -10.0, 10.0, gravity.getY(), value -> this.gravity = new Vector2D(this.gravity.getX(), value)));
+        this.variableSliders.add(new VariableSlider("Gravity X", -1.0, 1.0, gravityForce.getGravity().getX(), value -> gravityForce.setGravity(new Vector2D(value, gravityForce.getGravity().getY()))));
+        this.variableSliders.add(new VariableSlider("Gravity Y", -10.0, 10.0, gravityForce.getGravity().getY(), value -> gravityForce.setGravity(new Vector2D(gravityForce.getGravity().getX(), value))));
         this.variableSliders.add(new VariableSlider("Smoothing Width", 1.0, 20, smoothingWidth, value -> this.smoothingWidth = value));
-        this.variableSliders.add(new VariableSlider("Pressure Factor", 0, 20000.0, PRESSURE_FACTOR, value -> PRESSURE_FACTOR = value));
-        this.variableSliders.add(new VariableSlider("Viscosity Factor", 0, 100, VISCOSITY_FACTOR, value -> VISCOSITY_FACTOR = value));
-        this.variableSliders.add(new VariableSlider("Surface Tension Factor",0, 100, SURFACE_TENSION_FACTOR, value -> SURFACE_TENSION_FACTOR = value));
+        this.variableSliders.add(new VariableSlider("Pressure Factor", 0, 20000.0, pressureForce.getForceConstant(), value -> pressureForce.setForceConstant(value)));
+        this.variableSliders.add(new VariableSlider("Viscosity Factor", 0, 100, viscosityForce.getForceConstant(), value -> viscosityForce.setForceConstant(value)));
+        this.variableSliders.add(new VariableSlider("Surface Tension Factor",0, 100, surfaceTensionForce.getForceConstant(), value -> surfaceTensionForce.setForceConstant(value)));
         this.variableSliders.add(new VariableSlider("Minimum Surface Tension Force Magnitude", 0, 10, MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE, value -> MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = value));
         this.variableSliders.add(new VariableSlider("Mouse Radius", 1.0, 1000, mouseRadius, value -> this.mouseRadius = value));
         this.variableSliders.add(new VariableSlider("Mouse Power", -100, 100, mousePower, value -> this.mousePower = value));
         this.variableSliders.add(new VariableSlider("Threading Chunk Size", 1, 1000, threadingChunkSize, value -> this.threadingChunkSize = (int)Math.round(value)));
         
+        String[] kernelNames = new String[kernels.size()];
+        for (int i = 0; i < kernels.size(); i++) {
+            kernelNames[i] = kernels.get(i).getType();
+        }
         this.dropDowns = new ArrayList<DropDown>();
-        this.dropDowns.add(new DropDown("Pressure", kernelNames, "Pressure"));
-        this.dropDowns.add(new DropDown("Viscosity", kernelNames, "Viscosity"));
-        this.dropDowns.add(new DropDown("Surface Tension", kernelNames, "Surface Tension"));
+        for (ForceObject force : forces) {
+            if (force instanceof GridForce) {
+                this.dropDowns.add(new DropDown(force.getType(), kernelNames, ((GridForce)force).getKernel().getType(), (String selection) -> ((GridForce)force).setKernel(kernels.get(Arrays.asList(kernelNames).indexOf(selection)))));
+            }
+        }
 
         this.grid = new ArrayList[gridSize][gridSize];
         for (int i = 0; i < gridSize; i++) {
@@ -108,9 +123,9 @@ public class FluidSimulator {
     }
 
     private void setConstants() {
-        this.PRESSURE_FACTOR = 200;
-        this.VISCOSITY_FACTOR = 10; //460
-        this.SURFACE_TENSION_FACTOR = 10; //4.4e-3
+        this.PRESSURE_FACTOR = 50;
+        this.VISCOSITY_FACTOR = 5; //460
+        this.SURFACE_TENSION_FACTOR = 5; //4.4e-3
         this.MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = 4.1e-6; //3.2e-6
 
         this.width = 500;
@@ -119,11 +134,11 @@ public class FluidSimulator {
         this.simulationSpeed = 1; //51
         this.gravity = new Vector2D(0, 2.2); //2
 
-        this.numParticles = 5000;
+        this.numParticles = 1000;
 
         this.damping = 0.8; //0.95
-        this.gridSize = width/4; // number of grids per axis
-        this.numThreads = 1;
+        this.gridSize = width/8; // number of grids per axis
+        this.numThreads = 5;
         this.smoothingWidth = 2;
         this.subSteps = 1; //44
         this.mouseRadius = 100;
@@ -140,15 +155,6 @@ public class FluidSimulator {
         this.kernels.add(new ViscosityKernel());
         this.kernels.add(new SurfaceTensionKernel());
 
-    }
-
-    private void addAllForces() {
-        this.forces = new ArrayList<>();
-        this.forces.add(new PressureForce(kernels.get(2)));
-        this.forces.add(new ViscosityForce(kernels.get(3)));
-        this.forces.add(new SurfaceTensionForce(kernels.get(4)));
-        this.forces.add(new GravityForce(gravity));
-        
     }
 
     private void addAllMeasurements() {
@@ -236,18 +242,13 @@ public class FluidSimulator {
     }
 
     private List<Particle> getNearbyParticles(Particle p) {
+        int[] gridPos = p.getGridPosition();
         // Get particles from 3x3 grid around current particle
         List<Particle> nearbyParticles = new ArrayList<>();
-        for (int i = -1; i <= 1; i++) {
-            for (int j = -1; j <= 1; j++) {
-                int newX = p.getGridPosition()[0] + i;
-                int newY = p.getGridPosition()[1] + j;
-                if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
-                    for (Particle neighbor : grid[newX][newY]) {
-                        if (neighbor != p) {
-                            nearbyParticles.add(neighbor);
-                        }
-                    }
+        for (int i = Math.max(0, gridPos[0]-1); i <= Math.min(gridSize-1, gridPos[0]+1); i++) {
+            for (int j = Math.max(0, gridPos[1]-1); j <= Math.min(gridSize-1, gridPos[1]+1); j++) {
+                for (Particle neighbor : grid[i][j]) {
+                    nearbyParticles.add(neighbor);
                 }
             }
         }
@@ -267,17 +268,25 @@ public class FluidSimulator {
         // Calculate measurements
         startTime = System.nanoTime();
         executeParallelTask(p -> {
-            
-
             for (MeasurementObject measurement : measurementObjects) {
                 if (measurement.isChangingMeasurement()) {
                     if (measurement instanceof MeasurementKernelObject) {
                         // For kernel measurements, use nearby particles
                         double totalMeasurement = 0;
                         for (Particle neighbor : getNearbyParticles(p)) {
-                            totalMeasurement += ((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth);
+                            if (((MeasurementKernelObject)measurement).includeSelf || neighbor != p) {
+                                totalMeasurement += ((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth);
+                            }
                         }
                         p.setMeasurement(measurement.getName(), totalMeasurement);
+                        if (totalMeasurement<1) {
+                            System.err.println(measurement.getName() + ": " + totalMeasurement);
+                            for (Particle neighbor : getNearbyParticles(p)) {
+                                if (((MeasurementKernelObject)measurement).includeSelf || neighbor != p) {
+                                    System.err.println(((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth));
+                                }
+                            }
+                        }
                     } else {
                         p.setMeasurement(measurement.getName(), measurement.calculateMeasurement(p));
                     }
@@ -290,13 +299,14 @@ public class FluidSimulator {
         // Apply forces
         startTime = System.nanoTime();
         executeParallelTask(p -> {
-            
             for (ForceObject force : forces) {
                 if (force instanceof GridForce) {
                     // For grid forces, use nearby particles
                     Vector2D totalForce = new Vector2D(0, 0);
                     for (Particle neighbor : getNearbyParticles(p)) {
-                        totalForce.add(((GridForce)force).calculateForce(p, neighbor, smoothingWidth));
+                        Vector2D nextForce = ((GridForce)force).calculateForce(p, neighbor, smoothingWidth);
+                        totalForce= totalForce.add(nextForce);
+
                     }
                     p.applyForce(totalForce, consolidatedTimeStep);
                 } else {
@@ -305,7 +315,6 @@ public class FluidSimulator {
                     
                 }
             }
-            
 
             if (mousePosition != null && p.getPosition().distanceTo(new Vector2D(mousePosition.getX(), mousePosition.getY())) < mouseRadius) {
                 Vector2D force = new Vector2D(mousePosition.getX() - p.getX(), mousePosition.getY() - p.getY()).normalize().multiply(mousePower);
@@ -326,6 +335,7 @@ public class FluidSimulator {
         executeParallelTask(p -> {
             p.applyBoundaryConditions(width, height, damping);
             p.setColor();
+            p.clearMeasurements();
         }, executor);
         endTime = System.nanoTime();
         timeTaken[3] += endTime - startTime;
@@ -394,6 +404,74 @@ public class FluidSimulator {
             p.setGridPosition(new int[]{gridX, gridY});
         }
     }
+    /*
+
+    public double Kernel(double distance, int forceIndex) {
+        if (distance < smoothingWidth) {
+            if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
+                return Gaussian_Kernel(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Poly6")) {
+                return Poly6_Kernel(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Pressure")) {
+                return Pressure_Kernel(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Viscosity")) {
+                return Viscosity_Kernel(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Surface Tension")) {
+                return Surface_Tension_Kernel(distance);
+            }
+
+        }
+        return 0;
+    }
+
+    public double Kernel_Derivative(double distance, int forceIndex) {
+        if (distance < smoothingWidth) {
+            if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
+                return Gaussian_Kernel_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Poly6")) {
+                return Poly6_Kernel_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Pressure")) {
+                return Pressure_Kernel_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Viscosity")) {
+                return Viscosity_Kernel_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Surface Tension")) {
+                return Surface_Tension_Kernel_Derivative(distance);
+            }
+        }
+        return 0;
+    }
+
+    public double Kernel_Second_Derivative(double distance, int forceIndex) {
+        if (distance < smoothingWidth) {
+            if (dropDowns.get(forceIndex).getCurrentSelection().equals("Gaussian")) {
+                return Gaussian_Kernel_Second_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Poly6")) {
+                return Poly6_Kernel_Second_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Pressure")) {
+                return Pressure_Kernel_Second_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Viscosity")) {
+                return Viscosity_Kernel_Second_Derivative(distance);
+            }
+            else if (dropDowns.get(forceIndex).getCurrentSelection().equals("Surface Tension")) {
+                return Surface_Tension_Kernel_Second_Derivative(distance);
+            }
+        }
+        return 0;
+    }
+    */
+
+
 
     public void addRandomParticles(int numParticles, int width, int height, double[] xVelocityBounds, double[] yVelocityBounds) {
         // Create a smaller box centered horizontally and 2/3 up vertically
