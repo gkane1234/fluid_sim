@@ -3,21 +3,21 @@ package com.github.gkane1234.fluidsimulation.Forces;
 import com.github.gkane1234.fluidsimulation.Particle;
 import com.github.gkane1234.fluidsimulation.Vector2D;
 import com.github.gkane1234.fluidsimulation.Kernels.KernelObject;
-import com.github.gkane1234.fluidsimulation.Measurements.MeasurementObject;
-import java.util.List;
+import com.github.gkane1234.fluidsimulation.Measurements.MeasurementSet;
+import com.github.gkane1234.fluidsimulation.Constants.Variable;
 
 public abstract class GridForce extends ForceObject {
     protected KernelObject kernel;
 
 
-    public GridForce(KernelObject kernel, double forceConstant) {
+    public GridForce(KernelObject kernel, double forceConstant,String name) {
         super();
         this.kernel = kernel;
-        this.forceConstant = forceConstant;
+        this.variables.put("Force Constant", new Variable(name, forceConstant));
 
     }
-    public GridForce(KernelObject kernel) {
-        this(kernel, 1);
+    public GridForce(KernelObject kernel,String name) {
+        this(kernel, 1,name);
     }
 
     public void setKernel(KernelObject kernel) {
@@ -29,21 +29,13 @@ public abstract class GridForce extends ForceObject {
     }
 
     public double getForceConstant() {
-        return forceConstant;
+        return variables.get("Force Constant").getValue();
     }
 
     public void setForceConstant(double forceConstant) {
-        this.forceConstant = forceConstant;
+        variables.get("Force Constant").setValue(forceConstant);
     }
 
-
-    public void addMeasurement(MeasurementObject measurement) {
-        measurements.add(measurement);
-    }
-
-    public List<MeasurementObject> getMeasurements() {
-        return measurements;
-    }
 
     @Override
     public Vector2D calculateForce(Particle p) {

@@ -2,23 +2,37 @@ package com.github.gkane1234.fluidsimulation.Forces;
 
 import com.github.gkane1234.fluidsimulation.Particle;
 import com.github.gkane1234.fluidsimulation.Vector2D;
+import com.github.gkane1234.fluidsimulation.Measurements.MeasurementSet;
 import com.github.gkane1234.fluidsimulation.Measurements.MeasurementObject;
+import com.github.gkane1234.fluidsimulation.Constants.Variable;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+
 public abstract class ForceObject {
-    protected double forceConstant;
-    protected List<MeasurementObject> measurements;
+    protected MeasurementSet measurements;
+    protected Map<String, Variable> variables;
 
     public ForceObject() {
-        this.measurements = new ArrayList<>();
+        this.measurements = new MeasurementSet();
+        this.variables = new HashMap<>();
     }
 
-    public void setForceConstant(double forceConstant) {
-        this.forceConstant = forceConstant;
+    public void setVariable(String name, double value) {
+        this.variables.get(name).setValue(value);
     }
 
     public List<MeasurementObject> getMeasurements() {
-        return measurements;
+        return measurements.getMeasurements();
+    }
+
+    public void addMeasurement(MeasurementObject measurement) {
+        measurements.addMeasurement(measurement);
+    }
+
+    public List<Variable> getVariables() {
+        return new ArrayList<>(variables.values());
     }
 
     public abstract String getType();

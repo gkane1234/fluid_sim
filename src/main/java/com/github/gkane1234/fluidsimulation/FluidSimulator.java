@@ -6,6 +6,8 @@ import java.util.concurrent.Executors;
 import com.github.gkane1234.fluidsimulation.Forces.*;
 import com.github.gkane1234.fluidsimulation.Kernels.*;
 import com.github.gkane1234.fluidsimulation.Measurements.*;
+import com.github.gkane1234.fluidsimulation.gui.*;
+import com.github.gkane1234.fluidsimulation.Constants.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.ArrayList;
@@ -17,9 +19,6 @@ import java.util.Arrays;
 // create a kernel object
 // create a force object
 public class FluidSimulator {
-    private static final double VISCOSITY_FACTOR_MULTIPLIER = 1;//1000;
-    private static final double PRESSURE_FACTOR_MULTIPLIER = 1;//1000;
-    private static final double SURFACE_TENSION_FACTOR_MULTIPLIER = 1;//100000;
     private int width;
     private int height;
     private int numParticles;
@@ -54,8 +53,6 @@ public class FluidSimulator {
     private List<KernelObject> kernels;
     private List<MeasurementObject> measurementObjects;
 
-
-    private long lastTime;
     public FluidSimulator() {
         setConstants();
         addAllKernels();
@@ -81,16 +78,25 @@ public class FluidSimulator {
         this.variableSliders.add(new VariableSlider("Time Step", 0, 1000, timeStep*1000, value -> this.timeStep = value/1000));
         this.variableSliders.add(new VariableSlider("Sub Steps", 1, 100, subSteps, value -> this.subSteps = (int)Math.round(value)));
         this.variableSliders.add(new VariableSlider("Damping", 0.0, 1.0, damping, value -> this.damping = value));
-        this.variableSliders.add(new VariableSlider("Gravity X", -1.0, 1.0, gravityForce.getGravity().getX(), value -> gravityForce.setGravity(new Vector2D(value, gravityForce.getGravity().getY()))));
-        this.variableSliders.add(new VariableSlider("Gravity Y", -10.0, 10.0, gravityForce.getGravity().getY(), value -> gravityForce.setGravity(new Vector2D(gravityForce.getGravity().getX(), value))));
         this.variableSliders.add(new VariableSlider("Smoothing Width", 1.0, 20, smoothingWidth, value -> this.smoothingWidth = value));
-        this.variableSliders.add(new VariableSlider("Pressure Factor", 0, 20000.0, pressureForce.getForceConstant(), value -> pressureForce.setForceConstant(value)));
-        this.variableSliders.add(new VariableSlider("Viscosity Factor", 0, 100, viscosityForce.getForceConstant(), value -> viscosityForce.setForceConstant(value)));
-        this.variableSliders.add(new VariableSlider("Surface Tension Factor",0, 100, surfaceTensionForce.getForceConstant(), value -> surfaceTensionForce.setForceConstant(value)));
-        this.variableSliders.add(new VariableSlider("Minimum Surface Tension Force Magnitude", 0, 10, MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE, value -> MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = value));
         this.variableSliders.add(new VariableSlider("Mouse Radius", 1.0, 1000, mouseRadius, value -> this.mouseRadius = value));
         this.variableSliders.add(new VariableSlider("Mouse Power", -100, 100, mousePower, value -> this.mousePower = value));
         this.variableSliders.add(new VariableSlider("Threading Chunk Size", 1, 1000, threadingChunkSize, value -> this.threadingChunkSize = (int)Math.round(value)));
+        
+
+        for (ForceObject force : forces) {
+            for (Variable variable : force.getVariables()) {
+                this.variableSliders.add(variable.createVariableSlider());
+            }
+        }
+
+
+        //this.variableSliders.add(new VariableSlider("Gravity X", -1.0, 1.0, gravityForce.getGravity().getX(), value -> gravityForce.setGravity(new Vector2D(value, gravityForce.getGravity().getY()))));
+        //this.variableSliders.add(new VariableSlider("Gravity Y", -10.0, 10.0, gravityForce.getGravity().getY(), value -> gravityForce.setGravity(new Vector2D(gravityForce.getGravity().getX(), value))));
+        //this.variableSliders.add(new VariableSlider("Pressure Factor", 0, 20000.0, pressureForce.getForceConstant(), value -> pressureForce.setForceConstant(value)));
+        //this.variableSliders.add(new VariableSlider("Viscosity Factor", 0, 100, viscosityForce.getForceConstant(), value -> viscosityForce.setForceConstant(value)));
+        //this.variableSliders.add(new VariableSlider("Surface Tension Factor",0, 100, surfaceTensionForce.getForceConstant(), value -> surfaceTensionForce.setForceConstant(value)));
+        this.variableSliders.add(new VariableSlider("Minimum Surface Tension Force Magnitude", 0, 10, MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE, value -> MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = value));
         
         String[] kernelNames = new String[kernels.size()];
         for (int i = 0; i < kernels.size(); i++) {

@@ -1,4 +1,4 @@
-package com.github.gkane1234.fluidsimulation;
+package com.github.gkane1234.fluidsimulation.gui;
 
 import javax.swing.*;
 import java.awt.*;

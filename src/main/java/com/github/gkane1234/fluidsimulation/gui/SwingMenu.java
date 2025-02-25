@@ -1,6 +1,10 @@
-package com.github.gkane1234.fluidsimulation;
+package com.github.gkane1234.fluidsimulation.gui;
 
 import javax.swing.*;
+
+import com.github.gkane1234.fluidsimulation.FluidSimulator;
+
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;

@@ -8,6 +8,11 @@ import java.awt.event.KeyEvent;
 import javax.swing.*;
 import java.util.List;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import com.github.gkane1234.fluidsimulation.gui.VariableSlider;
+
+import com.github.gkane1234.fluidsimulation.gui.DropDown;
+
 import java.io.File;
 
 public class FluidDisplay extends JPanel {

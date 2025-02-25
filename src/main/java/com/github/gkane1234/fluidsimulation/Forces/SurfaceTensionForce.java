@@ -8,8 +8,8 @@ public class SurfaceTensionForce extends GridForce {
     private final double SURFACE_TENSION_FACTOR_MULTIPLIER = 1;
     private double MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE = 1e-6;
     public SurfaceTensionForce(KernelObject kernel, double forceConstant) {
-        super(kernel, forceConstant);
-        this.measurements.add(DensityMeasurement.getInstance());
+        super(kernel, forceConstant,"Surface Tension Factor");
+        this.addMeasurement(DensityMeasurement.getInstance());
     }
 
     public SurfaceTensionForce(KernelObject kernel) {
@@ -36,7 +36,7 @@ public class SurfaceTensionForce extends GridForce {
 
     private double calculateSurfaceTensionForceMagnitude(Particle p, Particle neighbor,double distance, double smoothingWidth) {
         double surfaceTensionSecondDerivative = kernel.kernelSecondDerivative(distance, smoothingWidth);
-        double surfaceTensionMagnitude = -SURFACE_TENSION_FACTOR_MULTIPLIER*forceConstant*neighbor.getMass()/neighbor.getMeasurement("Density");
+        double surfaceTensionMagnitude = -SURFACE_TENSION_FACTOR_MULTIPLIER*getForceConstant()*neighbor.getMass()/neighbor.getMeasurement("Density");
         return surfaceTensionSecondDerivative*surfaceTensionMagnitude;
     }
 

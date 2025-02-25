@@ -2,6 +2,8 @@ package com.github.gkane1234.fluidsimulation;
 
 import javax.swing.SwingUtilities;
 
+import com.github.gkane1234.fluidsimulation.gui.SwingMenu;
+
 public class SimulationManager {
     private FluidSimulator simulator;
     private FluidGPU renderer;
