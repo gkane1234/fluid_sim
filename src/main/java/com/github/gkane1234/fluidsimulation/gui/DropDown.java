@@ -8,7 +8,6 @@ public class DropDown {
     private JComboBox<String> comboBox;
     private JLabel label;
     private String currentSelection;
-    private Consumer<String> updateFunction;
     
     public DropDown(String forceName, String[] kernelNames, String initialKernel, Consumer<String> updateFunction) {
         this.currentSelection = initialKernel;

@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Particle {
-    private Vector2D position;
-    private Vector2D velocity;
+    private Vector position;
+    private Vector velocity;
     private double mass;
     private Map<String, Double> measurements;
 
@@ -15,14 +15,14 @@ public class Particle {
     
 
     public Particle(double x, double y) {
-        this(new Vector2D(x, y), new Vector2D(0, 0), 1);
+        this(new Vector(x,y), new Vector(0,0), 1);
     }
 
     public Particle(double x, double y, double vx, double vy, double mass) {
-        this(new Vector2D(x, y), new Vector2D(vx, vy), mass);
+        this(new Vector(x,y), new Vector(vx,vy), mass);
     }
 
-    public Particle(Vector2D position, Vector2D velocity, double mass) {
+    public Particle(Vector position, Vector velocity, double mass) {
         this.position = position;
         this.velocity = velocity;
         this.mass = mass;
@@ -38,11 +38,11 @@ public class Particle {
         return position.getY();
     }
 
-    public Vector2D getPosition() {
+    public Vector getPosition() {
         return position;
     }   
 
-    public Vector2D getVelocity() {
+    public Vector getVelocity() {
         return velocity;
     }
 
@@ -70,7 +70,7 @@ public class Particle {
         this.mass = mass;
     }
 
-    public void setVelocity(Vector2D velocity) {
+    public void setVelocity(Vector velocity) {
         this.velocity = velocity;
     }
 
@@ -103,32 +103,34 @@ public class Particle {
         position=position.add(velocity.multiply(timeStep));
     }
 
-    public void applyForce(Vector2D force, double damping, double timeStep) {
+    public void applyForce(Vector force, double damping, double timeStep) {
+
         force = force.multiply(1/mass);
         velocity=velocity.add(force.multiply(timeStep));
         velocity=velocity.multiply(damping);
+
     }
 
-    public void applyForce(Vector2D force, double timeStep) {
+    public void applyForce(Vector force, double timeStep) {
         applyForce(force,1, timeStep);
     }
 
     public void applyBoundaryConditions(int width, int height, double damping) {
         if (position.getX() < 0) {
-            position=new Vector2D(0, position.getY());
-            velocity=new Vector2D(-velocity.getX()*damping, velocity.getY());
+            position=new Vector(0, position.getY());
+            velocity=new Vector(-velocity.getX()*damping, velocity.getY());
         }
         if (position.getX() > width) {
-            position=new Vector2D(width, position.getY());
-            velocity=new Vector2D(-velocity.getX()*damping, velocity.getY());
+            position=new Vector(width, position.getY());
+            velocity=new Vector(-velocity.getX()*damping, velocity.getY());
         }
         if (position.getY() < 0) {
-            position=new Vector2D(position.getX(), 0);
-            velocity=new Vector2D(velocity.getX(), -velocity.getY()*damping);
+            position=new Vector(position.getX(), 0);
+            velocity=new Vector(velocity.getX(), -velocity.getY()*damping);
         }
         if (position.getY() > height) {
-            position=new Vector2D(position.getX(), height);
-            velocity=new Vector2D(velocity.getX(), -velocity.getY()*damping);
+            position=new Vector(position.getX(), height);
+            velocity=new Vector(velocity.getX(), -velocity.getY()*damping);
         }
         
         

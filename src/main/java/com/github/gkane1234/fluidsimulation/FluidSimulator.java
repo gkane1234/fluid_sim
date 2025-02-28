@@ -27,7 +27,7 @@ public class FluidSimulator {
     private double timeStep;
     private int subSteps;
     private double simulationSpeed;
-    private Vector2D gravity;
+    private Vector gravity;
     private double damping;
     private int gridSize;
     private int numThreads;
@@ -112,7 +112,7 @@ public class FluidSimulator {
         this.grid = new ArrayList[gridSize][gridSize];
         for (int i = 0; i < gridSize; i++) {
             for (int j = 0; j < gridSize; j++) {
-                this.grid[i][j] = new ArrayList<Particle>();
+                grid[i][j] = new ArrayList<Particle>();
             }
         }
         this.particles = new ArrayList<>();
@@ -138,13 +138,13 @@ public class FluidSimulator {
         this.height = 500;
         this.timeStep = 0.05;
         this.simulationSpeed = 1; //51
-        this.gravity = new Vector2D(0, 2.2); //2
+        this.gravity = new Vector(0,2.2); //2
 
         this.numParticles = 1000;
 
         this.damping = 0.8; //0.95
-        this.gridSize = width/8; // number of grids per axis
-        this.numThreads = 5;
+        this.gridSize = width/4; // number of grids per axis
+        this.numThreads = 100;
         this.smoothingWidth = 2;
         this.subSteps = 1; //44
         this.mouseRadius = 100;
@@ -247,14 +247,16 @@ public class FluidSimulator {
         particle.setGridPosition(new int[]{gridX, gridY});
     }
 
-    private List<Particle> getNearbyParticles(Particle p) {
+    private List<Particle> getNearbyParticles(Particle p,boolean includeSelf) {
         int[] gridPos = p.getGridPosition();
         // Get particles from 3x3 grid around current particle
         List<Particle> nearbyParticles = new ArrayList<>();
         for (int i = Math.max(0, gridPos[0]-1); i <= Math.min(gridSize-1, gridPos[0]+1); i++) {
             for (int j = Math.max(0, gridPos[1]-1); j <= Math.min(gridSize-1, gridPos[1]+1); j++) {
                 for (Particle neighbor : grid[i][j]) {
-                    nearbyParticles.add(neighbor);
+                    if (includeSelf || !neighbor.equals(p)) {
+                        nearbyParticles.add(neighbor);
+                    }
                 }
             }
         }
@@ -262,6 +264,7 @@ public class FluidSimulator {
     }
 
     public void timeStep() {
+
         double consolidatedTimeStep = simulationSpeed*timeStep/subSteps;
         long startTime = System.nanoTime();
         // Update particle positions and grid position.
@@ -279,20 +282,10 @@ public class FluidSimulator {
                     if (measurement instanceof MeasurementKernelObject) {
                         // For kernel measurements, use nearby particles
                         double totalMeasurement = 0;
-                        for (Particle neighbor : getNearbyParticles(p)) {
-                            if (((MeasurementKernelObject)measurement).includeSelf || neighbor != p) {
-                                totalMeasurement += ((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth);
-                            }
+                        for (Particle neighbor : getNearbyParticles(p,((MeasurementKernelObject)measurement).includeSelf)) {
+                            totalMeasurement += ((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth);
                         }
                         p.setMeasurement(measurement.getName(), totalMeasurement);
-                        if (totalMeasurement<1) {
-                            System.err.println(measurement.getName() + ": " + totalMeasurement);
-                            for (Particle neighbor : getNearbyParticles(p)) {
-                                if (((MeasurementKernelObject)measurement).includeSelf || neighbor != p) {
-                                    System.err.println(((MeasurementKernelObject)measurement).calculateMeasurement(p, neighbor, smoothingWidth));
-                                }
-                            }
-                        }
                     } else {
                         p.setMeasurement(measurement.getName(), measurement.calculateMeasurement(p));
                     }
@@ -308,9 +301,9 @@ public class FluidSimulator {
             for (ForceObject force : forces) {
                 if (force instanceof GridForce) {
                     // For grid forces, use nearby particles
-                    Vector2D totalForce = new Vector2D(0, 0);
-                    for (Particle neighbor : getNearbyParticles(p)) {
-                        Vector2D nextForce = ((GridForce)force).calculateForce(p, neighbor, smoothingWidth);
+                    Vector totalForce = new Vector(0,0);
+                    for (Particle neighbor : getNearbyParticles(p,false)) {
+                        Vector nextForce = ((GridForce)force).calculateForce(p, neighbor, smoothingWidth);
                         totalForce= totalForce.add(nextForce);
 
                     }
@@ -322,14 +315,14 @@ public class FluidSimulator {
                 }
             }
 
-            if (mousePosition != null && p.getPosition().distanceTo(new Vector2D(mousePosition.getX(), mousePosition.getY())) < mouseRadius) {
-                Vector2D force = new Vector2D(mousePosition.getX() - p.getX(), mousePosition.getY() - p.getY()).normalize().multiply(mousePower);
+            if (mousePosition != null && p.getPosition().distanceTo(new Vector(new double[] { mousePosition.getX(), mousePosition.getY() })) < mouseRadius) {
+                Vector force = new Vector(mousePosition.getX() - p.getX(), mousePosition.getY() - p.getY()).normalize().multiply(mousePower);
                 p.applyForce(force, consolidatedTimeStep);
             }
 
             for (Attractor attractor : attractors) {
-                if (p.getPosition().distanceTo(new Vector2D(attractor.getPosition().getX(), attractor.getPosition().getY())) < attractor.getRadius()) {
-                    Vector2D force = new Vector2D(attractor.getPosition().getX() - p.getX(), attractor.getPosition().getY() - p.getY()).normalize().multiply(attractor.getStrength());
+                if (p.getPosition().distanceTo(new Vector(new double[] { attractor.getPosition().getX(), attractor.getPosition().getY() })) < attractor.getRadius()) {
+                    Vector force = new Vector(attractor.getPosition().getX() - p.getX(), attractor.getPosition().getY() - p.getY()).normalize().multiply(attractor.getStrength());
                     p.applyForce(force, consolidatedTimeStep);
                 }
             }
@@ -345,6 +338,7 @@ public class FluidSimulator {
         }, executor);
         endTime = System.nanoTime();
         timeTaken[3] += endTime - startTime;
+
     }
 
     private void executeParallelTask(ParticleTask task, ExecutorService executor) {

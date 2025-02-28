@@ -1,9 +1,8 @@
 package com.github.gkane1234.fluidsimulation.Forces;
 
 import com.github.gkane1234.fluidsimulation.Particle;
-import com.github.gkane1234.fluidsimulation.Vector2D;
+import com.github.gkane1234.fluidsimulation.Vector;
 import com.github.gkane1234.fluidsimulation.Kernels.KernelObject;
-import com.github.gkane1234.fluidsimulation.Measurements.MeasurementSet;
 import com.github.gkane1234.fluidsimulation.Constants.Variable;
 
 public abstract class GridForce extends ForceObject {
@@ -38,10 +37,10 @@ public abstract class GridForce extends ForceObject {
 
 
     @Override
-    public Vector2D calculateForce(Particle p) {
+    public Vector calculateForce(Particle p) {
         throw new UnsupportedOperationException("A GridForce must be calculated with a neighbor and distance");
     }
 
-    public abstract Vector2D calculateForce(Particle p, Particle neighbor,double smoothingWidth);
+    public abstract Vector calculateForce(Particle p, Particle neighbor, double smoothingWidth);
 
 }

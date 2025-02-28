@@ -1,6 +1,7 @@
 package com.github.gkane1234.fluidsimulation.Forces;
 
-import com.github.gkane1234.fluidsimulation.*;
+import com.github.gkane1234.fluidsimulation.Vector;
+import com.github.gkane1234.fluidsimulation.Particle;
 import com.github.gkane1234.fluidsimulation.Kernels.KernelObject;
 import com.github.gkane1234.fluidsimulation.Measurements.DensityMeasurement;
 
@@ -17,20 +18,22 @@ public class SurfaceTensionForce extends GridForce {
     }
 
     @Override
-    public Vector2D calculateForce(Particle p, Particle neighbor, double smoothingWidth) {
+    public Vector calculateForce(Particle p, Particle neighbor, double smoothingWidth) {
         double distance = p.getPosition().distanceTo(neighbor.getPosition());
-        Vector2D unnormalizedForceDirection = calculateUnnormalizedSurfaceTensionForceDirection(p, neighbor, distance, smoothingWidth);
+        Vector unnormalizedForceDirection = calculateUnnormalizedSurfaceTensionForceDirection(p, neighbor, distance, smoothingWidth);
         double forceMagnitude = calculateSurfaceTensionForceMagnitude(p, neighbor, distance, smoothingWidth);
         if (unnormalizedForceDirection.magnitude() < MINIMUM_SURFACE_TENSION_FORCE_MAGNITUDE) {
-            return new Vector2D(0, 0);
+            return new Vector(0, 0);
         }
+
+
         return unnormalizedForceDirection.normalize().multiply(forceMagnitude);
     }
     
 
-    private Vector2D calculateUnnormalizedSurfaceTensionForceDirection(Particle p, Particle neighbor,double distance, double smoothingWidth) {
+    private Vector calculateUnnormalizedSurfaceTensionForceDirection(Particle p, Particle neighbor,double distance, double smoothingWidth) {
         double surfaceTensionDerivative = kernel.kernelDerivative(distance, smoothingWidth);
-        Vector2D directionOfSurfaceTension = neighbor.getPosition().subtract(p.getPosition()).normalize();
+        Vector directionOfSurfaceTension = neighbor.getPosition().subtract(p.getPosition()).normalize();
         return directionOfSurfaceTension.multiply(surfaceTensionDerivative);
     }
 

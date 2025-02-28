@@ -1,7 +1,7 @@
 package com.github.gkane1234.fluidsimulation.Forces;
 
 import com.github.gkane1234.fluidsimulation.Particle;
-import com.github.gkane1234.fluidsimulation.Vector2D;
+import com.github.gkane1234.fluidsimulation.Vector;
 import com.github.gkane1234.fluidsimulation.Measurements.MeasurementSet;
 import com.github.gkane1234.fluidsimulation.Measurements.MeasurementObject;
 import com.github.gkane1234.fluidsimulation.Constants.Variable;
@@ -36,7 +36,7 @@ public abstract class ForceObject {
     }
 
     public abstract String getType();
-    public abstract Vector2D calculateForce(Particle p);
+    public abstract Vector calculateForce(Particle p);
 
 
 }

@@ -1,7 +1,7 @@
 package com.github.gkane1234.fluidsimulation.Forces;
 
 import com.github.gkane1234.fluidsimulation.Particle;
-import com.github.gkane1234.fluidsimulation.Vector2D;
+import com.github.gkane1234.fluidsimulation.Vector;
 import com.github.gkane1234.fluidsimulation.Kernels.KernelObject;
 import com.github.gkane1234.fluidsimulation.Measurements.DensityMeasurement;
 
@@ -22,17 +22,17 @@ public class PressureForce extends GridForce {
     }
 
     @Override
-    public Vector2D calculateForce(Particle p, Particle neighbor, double smoothingWidth) {
+    public Vector calculateForce(Particle p, Particle neighbor, double smoothingWidth) {
 
         double distance = p.getPosition().distanceTo(neighbor.getPosition());
         double pressureMagnitude = PRESSURE_FACTOR_MULTIPLIER*neighbor.getMass()*(getForceConstant()*(neighbor.getMeasurement("Density")+p.getMeasurement("Density"))/(2*neighbor.getMeasurement("Density")));
         double pressureDerivative = kernel.kernelDerivative(distance, smoothingWidth);
-        //System.err.println(pressureDerivative);
-        Vector2D directionOfParticle = neighbor.getPosition().subtract(p.getPosition()).normalize();
-        return directionOfParticle.multiply(pressureDerivative*pressureMagnitude);
+        Vector directionOfParticle = neighbor.getPosition().subtract(p.getPosition()).normalize();
+        Vector pressureForce = directionOfParticle.multiply(pressureDerivative*pressureMagnitude);
+
+        return pressureForce;
 
     }
-
     @Override
     public String getType() {
         return "Pressure";

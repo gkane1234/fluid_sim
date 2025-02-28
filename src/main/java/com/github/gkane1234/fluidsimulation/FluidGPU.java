@@ -22,11 +22,14 @@ public class FluidGPU {
     private static final int ATTRACTOR_SIZE = 10;
     private boolean mousePressed = false;
     private double mouseX, mouseY;
+    private double frameRate = 120.0; // Target frame rate in FPS, -1 for unlimited
+    private double lastFrameTime;
     
     public FluidGPU(FluidSimulator simulator) {
         this.simulator = simulator;
         this.width = simulator.getWidth();
         this.height = simulator.getHeight();
+        this.lastFrameTime = glfwGetTime();
         initWindow();
         initGL();
     }
@@ -119,6 +122,16 @@ public class FluidGPU {
     }
 
     public void render() {
+        double currentTime = glfwGetTime();
+        double deltaTime = currentTime - lastFrameTime;
+        
+        // Limit frame rate if not set to unlimited (-1)
+        if (frameRate > 0 && deltaTime < 1.0/frameRate) {
+            return;
+        }
+        
+        lastFrameTime = currentTime;
+        
         // Clear and render
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -155,5 +168,15 @@ public class FluidGPU {
     public void cleanup() {
         glfwDestroyWindow(window);
         glfwTerminate();
+    }
+    
+    public void setFrameRate(double fps) {
+        this.frameRate = fps;
+        // Disable v-sync if running unlimited
+        glfwSwapInterval(fps < 0 ? 0 : 1);
+    }
+    
+    public double getFrameRate() {
+        return frameRate;
     }
 }

@@ -6,16 +6,16 @@ import com.github.gkane1234.fluidsimulation.FluidSimulator;
 
 
 import java.awt.*;
-import java.util.ArrayList;
+
 import java.util.List;
 
 public class SwingMenu extends JFrame {
-    private FluidSimulator simulator;
+
     private List<VariableSlider> sliders;
     private List<DropDown> dropDowns;
     
     public SwingMenu(FluidSimulator simulator) {
-        this.simulator = simulator;
+
         this.sliders = simulator.getVariableSliders();
         this.dropDowns = simulator.getDropDowns();
         
